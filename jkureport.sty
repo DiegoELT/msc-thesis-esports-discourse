@@ -87,6 +87,8 @@
     }%
 }
 
+\RequirePackage{caption}
+
 %% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1309,7 +1311,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% 
-%% Headings
+%% Headings & Captions
 %% 
 
 \KOMAoption{listof}{totoc}
@@ -1317,6 +1319,7 @@
 \KOMAoption{index}{totoc}
 \KOMAoption{numbers}{noenddot}
 \KOMAoption{captions}{tableheading}
+\captionsetup{format=hang}
 \ifdef{\chapter}{%
     \KOMAoption{chapterprefix}{true}
     \renewcommand*{\chaptermarkformat}{\thechapter\autodot\enskip}%
