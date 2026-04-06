@@ -1,0 +1,26 @@
+\section{AI Opportunities in Discourse Modeling}
+\label{sec:introduction:ai_opportunities_in_discourse_modeling}
+
+\subsection{Text Annotation and Labeling for Discourse Analysis}
+\label{subsec:labeling_and_annotation_of_text_segments}
+
+Natural Language Processing (NLP) techniques have shown effectiveness in the task of labeling text corpora. In domains where specific similar keywords are associated with certain discursive functions, classification models achieve an accuracy of up to 70\% \cite{su2024natural}. While such results are mentioned to be promising for critical security tasks, they could be more applicable in a domain such as esports commentary, where error tolerance is higher, and the presence of domain-specific keywords is still prevalent. 
+
+\medskip
+
+This higher tolerance is partly due to the nature of shoutcasting, in which there is a possibility for overlap between discursive functions in a single segment. In addition, some of the functions mentioned in Section \ref{sec:importance_of_discourse} are not mutually exclusive, and can co-occur. Examples of these cases will be further explored in our Methodology overview. 
+
+\medskip
+
+As in many text classification tasks, the full discursive function of a sentence can only be properly interpreted through its context. This is especially true for the case of the shoutcasting transcripts obtained from VODs. These are automatically divided into ``segments'' of a few seconds, which can be too short to form complete semantic units. In some cases, they may contain partial or multiple sentences, making it difficult to assign labels without the adjacent context. This also introduces the issue of long-range dependencies, which can be addressed with sequence models, such as Recurrent Neural Networks (RNNs) or Long Short-Term Memory (LSTM) architectures \cite{abdullahi2021deep}.
+
+\medskip
+
+More recently, transformer-based architectures, such as BERT and GPT, have demonstrated stronger performances in identifying these long-range dependencies \cite{wu2025advancementsnaturallanguageprocessing}. Therefore, they represent the state-of-the-art methodology in text classification tasks. However, it is necessary to take into account the annotated data requirements for training these models, and their computational cost. 
+
+\medskip
+
+Given that part of this work is oriented towards the development of an annotation framework, the availability of large-scale annotated data is limited. Taking this into consideration, this research explores the development of assistive tools for the annotation process, which can be used in a Human-in-the-Loop (HITL) workflow.
+
+\subsection{Possible Direction for Research Task}
+
