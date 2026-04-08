@@ -22,5 +22,40 @@ More recently, transformer-based architectures, such as BERT and GPT, have demon
 
 Given that part of this work is oriented towards the development of an annotation framework, the availability of large-scale annotated data is limited. Taking this into consideration, this research explores the development of assistive tools for the annotation process, which can be used in a Human-in-the-Loop (HITL) workflow.
 
-\subsection{Possible Direction for Research Task}
+\subsection{Research Objectives and Questions}
+
+The research task of this thesis is to \textbf{develop a computational model for automatic prediction of discursive functions in League of Legends esports shoutcasting}. To this end, we have identified the following 3 research questions:
+
+\begin{itemize}
+  \item \textbf{RQ1}: regarding the modeling of the discursive roles:
+  \begin{quote}
+    How can discourse functions in esports commentary be defined and represented computationally for automatic classification?
+  \end{quote}
+  \item \textbf{RQ2}: regarding the annotation of the data, and evaluation of the model:
+  \begin{quote}
+    How can Human-in-the-Loop AI-assisted annotation improve efficiency and consistency in discourse role labeling?
+  \end{quote}
+  \item \textbf{RQ3}: regarding the possible applications of our model and framework:
+  \begin{quote}
+    How reliable and scalable is the proposed framework for the development of future tools regarding label prediction and caster training?
+  \end{quote}
+\end{itemize}
+
+In addition to the segments obtained from the VODs, we will also explore the possibility of providing context through two complementary approaches. 
+
+\medskip
+
+The first, as mentioned in the previous section, will be the use of adjacent segments to form semantically complete text units. The number of segments to be included as context should be determined through iterative experimentation.  
+
+\medskip
+
+The second method will incorporate in-game events as a source of context. However, since access to the exact game data is not available for all professional matches, these will be manually annotated from the VODs, guided by the in-game announcer interface. This approach does not rely on the use of official Riot APIs, while still providing a more structured context for the model, \textit{e.g.} the presence of multiple kills in a short period of time can be a strong indicator of a high-action moment, associated with the Play-by-Play function.
+
+\medskip
+
+The models considered for the prediction of discursive functions include those mentioned in the previous section, with a particular focus on transformer-based architectures. As a baseline, a TF-IDF vectorizer, with logistic regression will be implemented. More advanced models, such as BERT, will be fine-tuned for the task with the annotated data, and improved with the use of context. 
+
+% We could include a transition paragraph here, but at the moment it does not feel too necessary
+
+\subsection{Thesis Contributions}
 
