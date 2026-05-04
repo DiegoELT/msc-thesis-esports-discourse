@@ -1,0 +1,43 @@
+\section{Broadcasting and Shoutcasting}
+\label{sec:literature-review:broadcast-and-shoutcasting}
+
+\subsection{Broadcast Medium Tools}
+\label{subsec:broadcast-medium-tools}
+
+In the previous chapter, Section \ref{sec:introduction:esports_and_shoutcasting}, the increasing broadcasting and audience engagement in esports events were introduced. As a result of this growth, several studies have been conducted in order to improve the understanding of this domain, and explore possible applications of Artificial Intelligence to enhance the viewer experience. 
+
+\medskip
+
+A key advantage for research in esports broadcasts is the availability of large-scale data. The broadcasting of esports events is often done through online streaming platforms, such as Twitch and YouTube, which provide a large amount of data in the form of video recordings (VODs) and live chat interactions. Multiple studies include the use of the broadcasting sites as a source of data for analyzing audience engagement. For instance, Pedrassoli et al. \cite{pedrassoli2024passive} provided an interactive tool for the platform Twitch, which showed live game statistics, while also obtaining telemetry data from the audience through the entirety of a Dota 2 tournament.
+
+\medskip
+
+The telemetry data obtained from the audience provided insights to understand the moments in which users tend to be more engaged with the broadcast. It also quantified user engagement, by defining an \textit{active user time} metric of around 5 seconds, when the game is in a critical moment.
+
+\medskip
+
+The importance of the active user time metric comes from the insight that it provides about the short-term user engagement during critical game events. These findings can aid in the design of temporal segments correlated to discourse functions while modeling shoutcasting structure. However, a limitation from this is that it heavily relies on the nature of the game. While the present study also focuses on a game from the MOBA genre, the same values of active user time may not be applicable without refinement according to the specific pacing of \textit{League of Legends}.
+
+\medskip
+
+Similar studies have also been conducted in order to find more subtle insights, through less structured data, such as the content of chat interactions. The research conducted by Jubaer et al. \cite{jubaer2024analyzing} analyzed the live data of the chat interactions of the official YouTube channels of PUBG Mobile in Bangladesh, India, and Pakistan, through the use of pre-trained language models for sentiment analysis and topic discovery. 
+
+\medskip
+
+Apart from discovering the positive sentiment of the audience, which aligns with the increasing popularity of esports, the study also found a correlation between game events / outcomes, and the sentiments of the audience, while topics were often a variety of:
+
+\begin{itemize}
+  \item Strategic Analysis
+  \item Player Performance
+  \item Community Interactions
+\end{itemize}
+
+Two main insights were obtained from the study. The first one is that there is a notable overlap between the topics of discussion in the live chat and the contents of the shoutcasting. This means that some of these topics could serve as a guide for the design of discourse function labels. The second one is that the models used show resilience when working with live chat data, which is often noisy and unstructured. This means that the use of pre-trained language models could be a good option for the design of an AI system to analyze the discourse of shoutcasters, as it would be able to handle the complexity of the language used in esports broadcasts.
+
+\medskip
+
+A limitation of this study is that it focuses only on the official YouTube channels of PUBG Mobile in a specific regional context. In contrast, the broadcasts of League of Legends are available in both their official esports channel, and licensed third-party channels. This results in a more varied dataset, as it will allow to observe different styles of shoutcasting and production, which may be more representative of the overall shoutcasting discourse, but also more difficult to model. 
+
+\medskip
+
+Overall, these studies show the potential of obtaining data directly from broadcasting platforms, as they provide a large amount of unstructured data. However, these are mostly focused on the audience engagement metrics, and not on the analysis of the shoutcasting discourse which faciliates the engagement. This is a gap that the present study aims to fill, by directly modeling the structure and function of shoutcasting discourse, through some of the same tools and techniques used in the aforementioned studies, such as the use of pre-trained language models for the analysis of unstructured data.
