@@ -162,6 +162,11 @@
 \usepackage{subfigure}
 %\usepackage{acronym}
 
+%% Macros for the annotation-guidelines appendix (Appendix A).
+%% Must come after jkureport, which already provides xcolor/tikz/tcolorbox/
+%% enumitem/multirow/array/tabularx/booktabs/caption/hyperref.
+\input{annotation-macros}
+
 %% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -325,6 +330,7 @@
 %% 
 
 \import{./}{91-appendix}
+\import{./}{92-annotation-guidelines}
 % ...
 
 %% 

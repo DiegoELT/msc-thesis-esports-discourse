@@ -1,0 +1,970 @@
+% =====================================================================
+%  ag-body.tex  --  Annotation Guidelines (thesis appendix)
+%
+%  Requires the macros defined in ag-preamble.tex.
+%  Uses \chapter -- if your thesis appendix is section-level, replace
+%  \chapter with \section and demote every heading by one level.
+% =====================================================================
+
+\chapter{Annotation Guidelines for Discourse Roles in League of Legends Shoutcasting}
+\label{app:guidelines}
+
+\begin{flushright}
+\footnotesize\textsf{Guideline version 1.0 \quad$\vert$\quad see \S\ref{sec:versioning} for the changelog}
+\end{flushright}
+
+% =====================================================================
+\section{Purpose and Scope}
+\label{sec:purpose}
+
+This appendix specifies the annotation scheme used to label discourse roles in League of Legends (LoL) live shoutcasting. It is a normative document: it defines what each label means, how the annotation unit is delimited, and how conflicts are resolved. The purpose of it is the following:
+
+\begin{enumerate}
+  \item \textbf{Reproducibility.} A reader should be able to reconstruct the labelling decisions behind the corpus without access to the annotator, and a future annotator should be able to extend the corpus consistently.
+  \item \textbf{Operational grounding for the model.} The labels are the supervision signal for the discourse-role classifier. Every systematic ambiguity left unresolved here becomes irreducible label noise downstream. Therefore this sets up an upper bound on the model's accuracy.
+  \item \textbf{Specification for AI-assisted annotation.} The human-in-the-loop (HITL) component requires a definition of the task that is stable enough for a model to be trained on and for human corrections to be interpreted against (\S\ref{sec:hitl}).
+\end{enumerate}
+
+\paragraph{What this document does not do.} It does not represent a justification of the label set's design and taxonomy. The labels represented here are not an exhaustive set of all possible discourse roles, but rather a set of roles that the corpus is annotated for. It is, also, not a full documentation on the annotation tool's (\textsc{Momouchi-v2}) interface and usage. 
+
+% =====================================================================
+\section{Theoretical Position of the Label Set}
+\label{sec:position}
+
+The labels for this scheme correspond to \emph{discourse roles of shoutcasting}: the communicative function an utterance performs within the broadcast. They are deliberately distinguished from two neighbouring concepts that can be easily misinterpreted.
+
+\begin{itemize}
+  \item \textbf{Dialogue acts} classify an utterance by its illocutionary force (\textsc{question}, \textsc{statement}, \textsc{agreement}) while independent of domain. Shoutcasting is overwhelmingly assertive, with questions being often rhetorical; a dialogue-act inventory would collapse almost the entire corpus into a single class and discard exactly the distinctions this thesis is interested in.
+  \item \textbf{Rhetorical/discourse relations} often seen in literature (either RST or PDTB) as a connection between textual units, \textit{e.g.} elaboration, contrast, or cause. This scheme labels the function of an utterance in the broadcast context, not its relation to other utterances. Labeling possible discourse relations remains as a possible future extension not covered in this thesis.
+\end{itemize}
+
+\begin{agrulebox}[Framing principle]
+A label describes \textbf{what the commentary utterance is doing for the broadcast}, not what it is talking about. Two segments about the same in-game event can receive different labels; two segments about entirely different subjects can receive the same one.
+\end{agrulebox}
+
+\noindent During preliminary annotations, these were the most common source of annotation error, so this principle is a central guideline to return to whenever a decision feels unclear. \emph{Topic is not function}.
+
+% =====================================================================
+\section{Annotation Unit}
+\label{sec:unit}
+
+\subsection{Definition}
+
+The annotation unit is the \textbf{transcript segment} as shown by
+the annotation tool: one caption block from the YouTube caption track,
+carrying a start timestamp, an end timestamp, and a text span (varying in length from 1 to 12 words). Exactly one label is assigned to each segment.
+
+\subsection{Justification and limits}
+
+This choice is pragmatic rather than principled, and therefore stated here so that it is not mistaken for a theoretical claim. Caption blocks are produced by an automatic captioning pipeline optimised for on-screen readability. Their boundaries correlate with pause structure and character count, not with the boundaries of discourse units. As a result, a single communicative move may be split across two or three segments, and a single segment may contain the end of one move and the start of another. The annotation scheme is designed to be robust to this noise, but it is still a limitation of the corpus.
+
+Two alternatives were considered and rejected:
+
+\begin{itemize}
+  \item \textbf{Re-segmenting into discourse units by hand.} This would
+    yield cleaner units but introduces a second, unvalidated annotation
+    layer (segmentation) whose reliability would itself need to be
+    established, and would make the corpus incommensurable with the raw
+    caption stream that any deployed system would receive at inference
+    time, as a full game returns around 500 to 1000 segments.
+  \item \textbf{Sentence segmentation of the concatenated transcript.}
+    Automatic sentence splitting on automatic-speech-recognition output
+    without reliable punctuation compounds two error sources rather than
+    removing one.
+\end{itemize}
+
+Annotating the caption block as it is provided by the pipeline keeps the annotation aligned with the input representation the model uses. Its drawback is the structural noise described above, which is acknowledged in the evaluation (\S\ref{sec:eval}) and in the discussion of model performance (\S\ref{sec:discussion}), as it does affect the model's grasp of the discourse function.
+
+% TODO: Add the evaluation and discussion sections to the appendix, or at least reference them.
+
+\subsection{Operational rules for the unit}
+
+\begin{itemize}
+  \item \rulelabel{unit-one} \textbf{One segment, one label.} Multi-label
+    annotation is not considered for this thesis. Where a segment carries more than one function, the dominant-function rule (\R{dominant}) and the precedence order (\S\ref{sec:precedence}) decide.
+
+  \item \rulelabel{unit-split} \textbf{A move split across segments is labelled consistently across all of its parts}, provided each part is independently interpretable in context. \textit{E.g.} A discussion of an in-game play by the shoutcasters, spanning three segments is three \SA{} segments, not one \SA{} followed by two fragments. Unit-split takes priority over Rule \R{unit-context}.
+
+  \item \rulelabel{unit-context} \textbf{Context is used freely. However a label only classifies its segment.} The annotator may and should  consult the surrounding transcript, the video, and the aligned game events. The label nonetheless characterises the segment it has been assigned to, not the surrounding stretch.
+\end{itemize}
+
+% =====================================================================
+
+\section{The Game-Event Layer}
+\label{sec:events}
+
+Alongside the discourse-role annotation, \textsc{Momouchi-v2} records a second, independent layer: the in-game events visible in the broadcast. This layer serves two purposes. It supplies the contextual features used by the event-aware models (\S\ref{sec:eval}), and it is consulted by the annotator during discourse labelling, where the annotation procedure (\S\ref{sec:procedure}) directs them to it.
+
+\subsection{How this layer differs from the discourse layer}
+
+The two layers are annotated on different units and to different standards, and conflating them would misrepresent both.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{The two annotation layers.}
+\label{tab:layers}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{@{}l X X@{}}
+\toprule
+ & \textbf{Discourse layer} & \textbf{Event layer} \\
+\midrule
+Unit & Transcript segment & Point in broadcast time \\
+Judgement & Interpretive & Observational \\
+Label source & This document & What the broadcast displays \\
+Expected agreement & Substantial, bounded by definitional ambiguity & Near-complete; disagreement indicates procedural error, not definitional ambiguity \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent Because the event layer is observational, a disagreement between two annotators about whether a dragon was taken is a lapse in attention or a
+difference in timing convention. Its reliability check is correspondingly light (\S\ref{sec:events-reliability}), and its agreement figures must not be pooled with the discourse layer's, since doing so would inflate the headline reliability of the scheme with numbers from an easier task.
+
+\subsection{Event inventory}
+
+The layer records kills, neutral objectives, and towers. Each event carries a
+type, a broadcast timestamp, and where the interface provides it, the teams or players involved.
+
+\subsection{Operational rules}
+
+\begin{itemize}
+  \item \rulelabel{e-broadcast} \textbf{Events are timestamped at the moment they are \emph{displayed} by the in-game announcer.} Since the purpose of this layer is to provide context for commentary, broadcast time is the correct anchor. There is currently no possibility to draw the data from an in-game API, although we are aware this would be a more reliable source of event timing. The timestamping convention is therefore a compromise between the ideal and the practical.
+  
+  \item \rulelabel{e-replay} \textbf{Replayed events are not logged as new occurrences.} The first display of an event is logged as the event; a subsequent replay is not logged. Therefore \REC{} prediction is partially guided by a visible shift in the event layer, but not by a replay of an event that has already been logged.
+
+  \item \rulelabel{e-shown} \textbf{Only events the broadcast displays are logged.} An event that occurred in the match but was never shown is not logged. Its absence is itself a fact about what the casters could respond to, and filling the gap from an external data source would break the alignment this layer exists to provide.
+
+  \item \rulelabel{e-simultaneous} \textbf{Concurrent events are logged individually.} A teamfight producing four kills is four events, each timestamped, not one aggregate. Aggregation, where wanted, is performed at analysis time and can then be varied; it cannot be recovered once the annotation has discarded it.
+
+  \item \rulelabel{e-order} \textbf{The event layer may be completed before or during discourse labelling.} Completing it first is preferred: it is the less demanding task, and having the events already visible reduces the effort of the discourse pass.
+
+  \item \rulelabel{e-independence} \textbf{Event proximity is evidence, never a decision rule.} This restates the caution in \S\ref{sec:procedure} because the risk is sharpest here. Where the event layer is completed first, the annotator arrives at each segment already knowing an event occurred nearby, and the temptation to let that fact select \PBP{} is correspondingly stronger. A kill near a segment does not make the segment \PBP{}; the decision procedure of \S\ref{sec:tree} decides.
+\end{itemize}
+
+\subsection{Reliability of the event layer}
+\label{sec:events-reliability}
+
+Because the task is observational, full double-annotation is not warranted. A
+proportionate check is:
+
+\begin{enumerate}
+  \item Re-log the events of one complete game, blind to the original pass.
+  \item Report event-level precision and recall against the original, and the
+    distribution of timestamp differences for matched events.
+  \item Report these separately from the discourse-layer agreement statistics
+    of \S\ref{sec:iaa}.
+\end{enumerate}
+
+\noindent The timestamp-difference distribution is the figure that matters: if there is a systematic offset between passes, it will be reflected in this distribution. Such an offset would propagate directly into any commentary-event alignment feature, and is worth knowing before those features are built.
+
+% =====================================================================
+\section{The Label Inventory}
+\label{sec:inventory}
+
+\subsection{Overview}
+
+\begin{table}[htbp]
+\centering
+\caption{The six discourse roles, with their defining orientation and
+temporal reference. Short codes are used in figures, while the full names are used in text and data files.}
+\label{tab:inventory}
+\small
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\textwidth}{@{}l l l X@{}}
+\toprule
+\textbf{Label} & \textbf{Code} & \textbf{Oriented to} & \textbf{Core function} \\
+\midrule
+\PBP{}  & \cPBP{} & Game state, now      & Reports the action as it unfolds \\
+\SA{}   & \cSA{}  & Game state, causal   & Explains, evaluates, or predicts \\
+\REC{}  & \cREC{} & Game state, past     & Summarises a previous event of interest in the match \\
+\STO{}  & \cSTO{} & Beyond this match    & Supplies narrative, biography, stakes, or history \\
+\HYP{}  & \cHYP{} & The audience         & Amplifies emotional intensity, or invites the audience to participate \\
+\BAN{}  & \cBAN{} & The co-caster        & Interpersonal, non-game-informational exchange \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{The two axes underlying the scheme}
+\label{sec:axes}
+
+The inventory is not a flat list. It is generated by two questions, and making those questions explicit is what turns a set of intuitions into a decision procedure.
+
+\paragraph{Axis 1 --- Orientation: who or what is the segment for?} Most shoutcasting is oriented toward the \emph{game state}: it conveys information about what is happening in the match. Two roles are not. \HYP{} is oriented toward the \emph{audience}: its work is affective, not informational. \BAN{} is oriented toward the \emph{co-caster}: its work is interpersonal.
+
+\paragraph{Axis 2 --- Temporal and epistemic reference: within the game-state-oriented roles, what is being referred to?} \PBP{} refers to the present, \REC{} to the completed past of this match, \SA{} to causes, consequences, and futures, and \STO{} to a frame wider than a single match altogether.
+
+\begin{table}[htbp]
+\centering
+\caption{The label set as the product of the two axes.}
+\label{tab:axes}
+\small
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}l l l@{}}
+\toprule
+\textbf{Orientation} & \textbf{Reference} & \textbf{Label} \\
+\midrule
+\multirow{4}{*}{Game state} & Present, unfolding      & \PBP{} \\
+                            & Completed, during match   & \REC{} \\
+                            & Causal / evaluative / predictive & \SA{} \\
+                            & Beyond a match       & \STO{} \\
+\midrule
+Audience                    & ---                     & \HYP{} \\
+Co-caster                   & ---                     & \BAN{} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Reading the decision as \emph{orientation first, reference second, with a focus on the 2 axes} resolves the majority of hard cases before the pairwise rules in \S\ref{sec:boundaries} are needed.
+
+% =====================================================================
+\section{Label Definitions}
+\label{sec:definitions}
+
+Each definition below has the same five parts: a one-sentence
+\textbf{definition}, the \textbf{criteria} that must hold, \textbf{cues}
+that typically but not necessarily accompany the label, \textbf{exclusions}
+that rule it out, and worked \textbf{examples}.
+
+\begin{agrulebox}[On the examples]
+Examples here are obtained, verbatim, from the preliminary annotation exercises, and may include merged utterance for clarity. Ellipsis (...) are used to indicate that the segment is part of a longer stretch of dialogue.
+
+These examples show both the fact that boundary rules have been tested, and illustrate that the distinction survives contact with real data. 
+\end{agrulebox}
+
+% ---------------------------------------------------------------------
+\subsection{Play-by-Play (\cPBP{})}
+\label{sec:def-pbp}
+
+\paragraph{Definition.} The caster reports the action of the match as it
+is happening or as it has just happened on screen, describing observable
+game events without primarily explaining, evaluating, or projecting them.
+
+\paragraph{Criteria.} All of the following:
+\begin{itemize}
+  \item The segment refers to game action that is currently visible or has concluded within the immediately preceding moments.
+  \item Its propositional content is \emph{descriptive}: it states what is or was the case.
+  \item It would still be informative to a listener who could not see the screen, or in the case that the in-game observer was not focusing on the event.
+\end{itemize}
+
+\paragraph{Cues.} Present tense and present progressive; named champions/players, items, objectives, and locations as grammatical subjects or objects; verbs of motion, contact, and acquisition; high delivery speed; tight temporal alignment with an event in the aligned event stream.
+
+\paragraph{Exclusions.}
+\begin{itemize}
+  \item If the segment's main work is explaining \emph{why} the action occurred or what it \emph{means}, it is \SA{} (see \S\ref{sec:b-pbp-sa}).
+  \item If the referenced action has clearly concluded and is being gathered into a summary, it is \REC{} (see \S\ref{sec:b-pbp-rec}).
+  \item If the segment carries no descriptive content and functions only to raise intensity, it is \HYP{} (see \S\ref{sec:b-pbp-hyp}). Excited delivery alone does not make a segment \HYP{}, since that is not sufficient to constitute a lack of descriptive content.
+\end{itemize}
+
+\begin{agexample}[\cPBP{} --- clear cases]
+\seg{...people TP also going to be used here by Palafox...}\\[2pt]
+\seg{...getting that knock up instead only the...}\\[2pt]
+\seg{...flashing forward try to make the moves...}
+\end{agexample}
+
+\begin{agexample}[\cPBP{} --- near misses]
+\seg{...which could be good for the return gank...}\\
+\hspace*{1em}$\rightarrow$ \SA{}. Although it mentions an in-game event, the shoutcaster is making a strategic assessment.\\[4pt]
+\seg{...well done was sick that was high on time.}\\
+\hspace*{1em}$\rightarrow$ \HYP{}. No descriptive content.\\[4pt]
+\seg{...it was a good call here which speak to...}\\
+\hspace*{1em}$\rightarrow$ \REC{}. Aggregates prior events rather than
+reporting a current one, noted by the past tense.
+\end{agexample}
+
+% ---------------------------------------------------------------------
+\subsection{Strategic Analysis (\cSA{})}
+\label{sec:def-sa}
+
+\paragraph{Definition.} The caster explains, evaluates, or projects: why
+something happened, what it implies, whether it was a good decision, or
+what should or will happen next.
+
+\paragraph{Criteria.} At least one of:
+\begin{itemize}
+  \item \textbf{Causal.} States or implies a reason for an event or a state of the game.
+  \item \textbf{Evaluative.} Judges a decision, execution, or position as good, bad, risky, or correct.
+  \item \textbf{Predictive/normative.} States what will happen, what a team needs, or what they should do.
+  \item \textbf{Structural.} Describes an aspect of the game state that is not directly observable as an event, \textit{e.g.} win conditions, item power spikes, map pressure, tempo, scaling.
+\end{itemize}
+
+\paragraph{Cues.} Causal and conditional connectives (\emph{because},
+\emph{so}, \emph{if}, \emph{that means}, \emph{which is why}); modal and
+deontic verbs (\emph{needs to}, \emph{has to}, \emph{wants to},
+\emph{should}); comparatives and evaluative adjectives; slower delivery;
+frequent occurrence in downtime between events.
+
+\paragraph{Exclusions.}
+\begin{itemize}
+  \item Pure description of a visible event is \PBP{}, even when the
+    event is strategically significant. Significance is a property of
+    the game, not of the discourse role.
+  \item Reasoning grounded in team history, player careers, or
+    tournament stakes rather than the game state is \STO{}
+    (\S\ref{sec:b-sto-sa}).
+\end{itemize}
+
+\begin{agexample}[\cSA{} --- clear cases]
+\seg{...two very different approach here from...}\\[2pt]
+\seg{Level twos in jail right up there with the best in the rift think Pantheon is...}\\[2pt]
+\seg{...coach nicely coordinated between the members of reverse gaming well deserve...}
+\end{agexample}
+
+\begin{agexample}[\cSA{} --- near misses]
+\seg{...including the Galio really want to just pick off this blue buff it seems gonna...}\\
+\hspace*{1em}$\rightarrow$ \PBP{}. Both clauses are descriptive; ``pick up this blue buff'' describes a visible event as it happens.\\[4pt]
+\seg{Though it hasn't been felt on the scoreboard this has been a great jungling debut tomorrow in general it's...}\\
+\hspace*{1em}$\rightarrow$ \STO{}. The reasoning is biographical, not
+tactical.
+\end{agexample}
+
+% ---------------------------------------------------------------------
+\subsection{Recap (\cREC{})}
+\label{sec:def-rec}
+
+\paragraph{Definition.} The caster summarises or restates events that have already concluded within the current match, gathering them rather than reporting them as they occur.
+
+\paragraph{Criteria.} All of the following:
+\begin{itemize}
+  \item The referent is a completed event or set of events in this match.
+  \item The event is no longer the on-screen action, the broadcast has moved on, or the segment accompanies a replay.
+  \item The function is retrospective consolidation: reminding, tallying, or restating for the audience.
+\end{itemize}
+
+\paragraph{Cues.} Past and perfect tenses; aggregation and counting (\emph{that's three now}, \emph{four kills in that fight}); explicit temporal anchoring (\emph{a minute ago}, \emph{back at level two}, \emph{and you could see...}); score and objective tallies; considerable temporal shift with in-game events, instead of proper alignment.
+
+\paragraph{Exclusions.}
+\begin{itemize}
+  \item Description concurrent with the action is \PBP{}, however recently it concluded (\S\ref{sec:b-pbp-rec}).
+  \item If the retrospective material is drawn from outside this match, it is \STO{} (\S\ref{sec:b-rec-sto}).
+  \item If the summary exists mainly to support a claim about causes or consequences, it is \SA{}.
+\end{itemize}
+
+\begin{agexample}[\cREC{} --- clear cases]
+\seg{...Age getting the kill Galia ultimate also used so when we get back to live you...}\\[2pt]
+\seg{..G2 member off the mat here's the windows we alluded to the new ie being done LWX...}\\[2pt]
+\seg{...pick well let's actually let take a look...}
+\end{agexample}
+
+% ---------------------------------------------------------------------
+\subsection{Storytelling (\cSTO{})}
+\label{sec:def-sto}
+
+\paragraph{Definition.} The caster supplies material from beyond the current match, \textit{e.g.} team and player history, career narrative, rivalries, tournament stakes, patch or meta context to frame the match as part of a larger story.
+
+\paragraph{Criteria.} At least one of:
+\begin{itemize}
+  \item Reference to prior matches, series, splits, or seasons.
+  \item Biographical or career information about a player or team.
+  \item Tournament context: standings, qualification, what is at stake.
+  \item Explicit narrative framing of the match or of a player's arc.
+  \item Characterization or psychological description of a player.
+\end{itemize}
+
+\begin{agrulebox}[The \STO{} Principle]
+  Based on the criteria above, \STO{} can be summarized as commentary which \textbf{supplies material whose warrant comes from outside the current game state}. Usually with information that can't be inferred from the current match alone.
+\end{agrulebox}
+
+\paragraph{Cues.} Proper names of past events, teams, and tournaments temporal expressions exceeding the match (\emph{last year}, \emph{in the spring split}, \emph{their whole career}); narrative vocabulary (\emph{story}, \emph{redemption}, \emph{rivalry}, \emph{finally}); biographical predicates; a drop in urgency of delivery.
+
+\paragraph{Exclusions.}
+\begin{itemize}
+  \item Retrospection confined to this match is \REC{}.
+  \item A caster's personal anecdote unrelated to the game or the competitive narrative is \BAN{} (\S\ref{sec:b-ban-sto}).
+\end{itemize}
+
+\begin{agexample}[\cSTO{} --- clear cases]
+\seg{...at length about how SKT should have won that's last game execution in the final...}\\[2pt]
+\seg{...important because G2 let's not forget when they first played against the...}\\[2pt]
+\seg{Mata in his first game of the semi-finals this world they know exactly...}
+\end{agexample}
+
+\paragraph{Note on \cSTO{}.} This label is of particular analytical interest: it is the clearest evidence that shoutcasting is structured discourse rather than an event-description stream, since its occurrence is not licensed by any game event. It is also the third most common label in the corpus, behind \PBP{} and \SA{}, and therefore a major contributor to the model's performance. The definition is deliberately broad, and the examples in \S\ref{sec:boundaries} show that it is robust to a wide range of content.
+
+% ---------------------------------------------------------------------
+\subsection{Hype (\cHYP{})}
+\label{sec:def-hyp}
+
+\paragraph{Definition.} The caster's primary contribution is affective amplification directed at the audience: raising, marking, or sustaining emotional intensity rather than conveying information. Also invitation to participate or interact in the broadcast. 
+
+\paragraph{Criteria.} Both of the following:
+\begin{itemize}
+  \item The segment carries little or no propositional content about the game state, unless it occurs right at the start of it. Removing it would cost the listener no information.
+  \item Its function is to intensify, celebrate, or mark the significance of the moment for the audience.
+  \item Involves broadcast framing, greeting, or direct address to the audience.
+\end{itemize}
+
+\paragraph{Cues.} Interjections and exclamations; repetition and elongation; superlatives without a described referent (\textit{e.g.} \emph{unbelievable}, \emph{are you kidding me}); direct address to the audience; vocative intensity in the audio track. 
+
+\paragraph{Exclusions.} Can be resumed in one general rule:
+\begin{agrulebox}[The information test for \cHYP{}]
+\rulelabel{hype-test} \textbf{Excited delivery does not make a segment
+\HYP{}.} Ask: \emph{if this segment were removed, would the listener lose
+information about the game?} If yes, label it by that information's
+function (\PBP{}, \SA{}, \REC{}, \STO{}). \HYP{} is assigned only when
+the answer is \textbf{No}.
+\end{agrulebox}
+
+\noindent This is the highest-risk label in the scheme. Affect in
+shoutcasting is usually a \emph{manner} layered over another function,
+not a function in itself; annotating by manner rather than function
+inflates \HYP{} and hollows out \PBP{}. Rule \R{hype-test} exists to
+prevent that drift.
+
+\begin{agexample}[\cHYP{} --- clear cases]
+\seg{...they will not just be run over they will...}\\[2pt]
+\seg{...because we're now already in game ladies and gentlemen for the second game of...}\\[2pt]
+\seg{Oh the 1v1!}
+\end{agexample}
+
+\begin{agexample}[\cHYP{} --- near misses]
+\seg{...very nice beautiful shutdown goes to Merlin with a nice shock wave.}\\[2pt]
+\hspace*{1em}$\rightarrow$ \PBP{}. Loudly delivered, but it describes a game event. Fails \R{hype-test}.\\[4pt]
+\seg{yeah Merlin is just a wizard I mean he finds all those crucial...}\\
+\hspace*{1em}$\rightarrow$ \STO{}. Elaborates on a player's skill and in-game events. Fails \R{hype-test}.
+\end{agexample}
+
+% ---------------------------------------------------------------------
+\subsection{Banter (\cBAN{})}
+\label{sec:def-ban}
+
+\paragraph{Definition.} Interpersonal exchange between casters whose function is social rather than informational: joking, teasing, self-deprecation, reacting to each other, or managing the desk relationship.
+
+\paragraph{Criteria.} All of the following:
+\begin{itemize}
+  \item The segment is oriented toward the co-caster (or the desk) as the addressee or subject.
+  \item Its function is social, \textit{e.g.} humour, rapport, teasing, personal reaction, rather than conveying game information. 
+  \item In-game events have not been referenced or do not provide informational context.
+\end{itemize}
+
+\paragraph{Cues.} Second-person address to a named co-caster; laughter tokens; callbacks to earlier jokes; self-reference (\emph{I}, \emph{we} as casters rather than as teams); topic shifts away from the match. Stakes of the game are low.
+
+\paragraph{Exclusions.}
+\begin{itemize}
+  \item Addressing the co-caster while conveying game information is \emph{not} \BAN{}: \seg{what do you make of that back?} is \SA{} if the surrounding exchange is analytical. Handoffs and turn-management are a delivery convention, not a discourse role.
+  \item Audience-directed excitement is \HYP{} (\S\ref{sec:b-ban-hyp}).
+\end{itemize}
+
+\begin{agexample}[\cBAN{} --- clear cases]
+\seg{...out hang on a minute where are my chicken nuggets they've been taken away.}\\[2pt]
+\seg{Snail don't separate us tail don't separate us down.}\\[2pt]
+\seg{...the items but it's not just the it's just the Snow Poppy skin but now going...}
+\end{agexample}
+
+\paragraph{Note on \cBAN{}.} This is the least common label in the corpus, and heavily depends on the co-caster's style and the broadcast's tone. It is also the most subjective label, since it depends on the annotator's interpretation of the social function. Therefore it is the most difficult to annotate consistently, and the most likely to be mislabelled.
+
+% =====================================================================
+\section{The Annotation Procedure}
+\label{sec:procedure}
+
+\subsection{Per-segment workflow}
+
+\begin{enumerate}
+  \item \textbf{Read the segment in context.} Read at least the two preceding and one following segments before deciding. Discourse function is context-dependent; a segment read in isolation is frequently mislabelled.
+  \item \textbf{Play the audio/video for the segment.} It is ideal to be watching the VOD while annotating whenever the text alone is ambiguous, when the transcript is degraded, or when the decision turns on delivery (relevant chiefly to \HYP{} and \BAN{}).
+  \item \textbf{Consult the aligned game events} (kills, neutral objectives, towers) shown by the tool (if possible, annotate this before annotating the segment, since they are objective). Event proximity is evidence, never a decision rule: a kill occurring near a segment does not make that segment \PBP{}.
+  \item \textbf{Apply the decision procedure} of \S\ref{sec:tree}.
+  \item \textbf{If still undecided after the procedure and the pairwise rules,} assign the best candidate and set the \textsf{UNCERTAIN} flag (\S\ref{sec:flags}). Do not leave segments unlabelled.
+\end{enumerate}
+
+\subsection{Session discipline}
+
+\begin{itemize}
+  \item \rulelabel{proc-order} \textbf{Annotate each game in broadcast order,} start to finish. Discourse function depends on what has already been said; out-of-order annotation systematically degrades \REC{} and \STO{} decisions.
+
+  \item \rulelabel{proc-fatigue} \textbf{Cap continuous annotation sessions at roughly 2-3 games.} Label drift under fatigue is a known and measurable effect; it will show up as intra-annotator inconsistency between early and late segments of long games.
+  
+  \item \rulelabel{proc-log} \textbf{Keep a log of difficult cases.} If a segment is hard to label, note the timestamp and the reason. This will help resolve systematic ambiguities and inform future guideline revisions.
+
+  \item \rulelabel{proc-nofix} \textbf{Do not revise earlier annotations \textit{ad hoc}} when a rule is clarified mid-pass. Record the clarification, finish the pass, then re-annotate the affected segments systematically under the new guideline version.
+\end{itemize}
+
+% =====================================================================
+\section{Decision Procedure}
+\label{sec:tree}
+
+\subsection{Ordered procedure}
+
+Apply the following tests in order and stop at the first that fires. The order follows \emph{orientation} before \emph{reference} (\S\ref{sec:axes}), and tests the more marked, lower-frequency functions before the unmarked default.
+
+\begin{agrulebox}[Decision procedure]
+\begin{enumerate}[leftmargin=2.2em]
+  \item \textbf{Is the segment oriented to the co-caster, with a social
+    rather than informational function?} \\ $\rightarrow$ \BAN{}
+  \item \textbf{Does the segment carry essentially no information about
+    the game, functioning to intensify the moment for the audience?}
+    (Apply \R{hype-test}.) \\ $\rightarrow$ \HYP{}
+  \item \textbf{Does the segment draw on material from beyond this
+    match --- history, biography, stakes, season narrative?} \\
+    $\rightarrow$ \STO{}
+  \item \textbf{Does the segment explain, evaluate, or project, rather
+    than report?} \\ $\rightarrow$ \SA{}
+  \item \textbf{Does the segment summarise concluded events of this
+    match rather than report current action?} \\ $\rightarrow$ \REC{}
+  \item \textbf{Otherwise:} the segment reports the unfolding action.
+    \\ $\rightarrow$ \PBP{}
+\end{enumerate}
+\end{agrulebox}
+
+\noindent \PBP{} occupies the default position deliberately. It is the
+unmarked function of shoutcasting; placing it last means a segment receives a marked label only when there is positive evidence for it, which biases the scheme toward under- rather than over-application of the rarer classes. We note that the \PBP{} is not the majority label in the corpus, but it is the majority label in the \emph{residual} cases where none of the other tests fire.
+
+\subsection{Decision tree}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=6mm,
+  every node/.style={font=\small},
+  q/.style={draw=clrRule, fill=clrSoft, rounded corners=2pt,
+            align=left, text width=68mm, inner sep=5pt},
+  lab/.style={draw, fill=white, rounded corners=2pt, align=center,
+              inner sep=4pt, minimum width=32mm, font=\small\sffamily\bfseries},
+  ar/.style={-{Stealth[length=2mm]}, draw=clrRule!70},
+  yeslab/.style={font=\scriptsize\sffamily, midway, above, xshift=1mm},
+  nolab/.style={font=\scriptsize\sffamily, midway, right, xshift=1mm}
+]
+
+\node[q] (q1) {\textbf{1.} Oriented to the co-caster, socially?};
+\node[lab, draw=clrBAN, text=clrBAN, right=22mm of q1] (ban) {Banter};
+
+\node[q, below=of q1] (q2) {\textbf{2.} No game information, pure audience-directed intensity?};
+\node[lab, draw=clrHYP, text=clrHYP, right=22mm of q2] (hyp) {Hype};
+
+\node[q, below=of q2] (q3) {\textbf{3.} Draws on material beyond this match?};
+\node[lab, draw=clrSTO, text=clrSTO, right=22mm of q3] (sto) {Storytelling};
+
+\node[q, below=of q3] (q4) {\textbf{4.} Explains, evaluates, or predicts?};
+\node[lab, draw=clrSA, text=clrSA, right=22mm of q4] (sa) {Strategic Analysis};
+
+\node[q, below=of q4] (q5) {\textbf{5.} Summarises concluded events of this match?};
+\node[lab, draw=clrREC, text=clrREC, right=22mm of q5] (rec) {Recap};
+
+\node[lab, draw=clrPBP, text=clrPBP, below=9mm of q5] (pbp) {Play-by-Play};
+
+\foreach \a/\b in {q1/ban, q2/hyp, q3/sto, q4/sa, q5/rec}
+  \draw[ar] (\a.east) -- node[yeslab] {yes} (\b.west);
+
+\foreach \a/\b in {q1/q2, q2/q3, q3/q4, q4/q5}
+  \draw[ar] (\a.south) -- node[nolab] {no} (\b.north);
+
+\draw[ar] (q5.south) -- node[nolab] {no} (pbp.north);
+
+\end{tikzpicture}
+\caption{The decision procedure as a tree. Tests are applied top to bottom; the first test that fires assigns the label. \PBP{} is the default terminal.}
+\label{fig:tree}
+\end{figure}
+
+\subsection{Dominant-function and precedence rules}
+\label{sec:precedence}
+
+\begin{itemize}
+  \item \rulelabel{dominant} \textbf{Dominant-function rule.} When a segment performs more than one function, assign the label of the function that carries the segment's main communicative work. \textit{I.e.}, the function whose removal would most change what the segment accomplishes.
+
+  \item \rulelabel{subordination} \textbf{Syntactic subordination is evidence of subordinate function.} In a segment such as \seg{he dives the tower because they have no jungle pressure}, the causal clause is the main assertion and the label is \SA{}. Grammatical structure is evidence, not proof; delivery and context can override it.
+
+  \item \rulelabel{precedence} \textbf{Precedence order for genuine
+    ties.} Where \R{dominant} cannot discriminate, apply:
+    \[ \BAN{} \succ \STO{} \succ \SA{} \succ \REC{} \succ \PBP{} \succ \HYP{} \]
+  The order runs from the label requiring the most specific positive evidence to the label requiring the least. \BAN{} and \STO{} need evidence external to the current game state; \SA{} needs explanatory work; \REC{} needs retrospection and/or video replay; \PBP{} needs only description. \HYP{} is last by construction: under \R{hype-test} it cannot win a tie against any label that carries information, so it is assigned only when it is the sole candidate.
+
+  Note that this order is \emph{not} the order of the decision procedure featured in Figure~\ref{fig:tree}, and the two do different work. The procedure orders \emph{tests} by how cleanly they discriminate; \R{precedence} orders \emph{labels} by evidential demand, for the residual cases where two functions are genuinely co-dominant.
+
+  \R{precedence} is a last resort. A corpus in which it is invoked frequently indicates that the definitions, not the tie-break, need revision. If the tie-break is still not clear enough, a label can be assigned with the \textsf{UNCERTAIN} flag (\S\ref{sec:flags}) to indicate that it is a best guess.
+\end{itemize}
+
+% =====================================================================
+\section{Boundary Cases}
+\label{sec:boundaries}
+
+The following pairs account for the large majority of difficult decisions, many of them which occurred during preliminary annotation. Each gives a single discriminating test.
+
+% ---------------------------------------------------------------------
+\subsection{Play-by-Play vs.\ Strategic Analysis}
+\label{sec:b-pbp-sa}
+
+\begin{agrulebox}[Test: description or explanation?]
+\rulelabel{t-pbp-sa} Ask whether the segment answers \textbf{``what is happening?''} (\PBP{}) or \textbf{``why / so what / what next?''} (\SA{}). \\[3pt]
+\textit{Insertion test:} if a causal or consequential connective (\emph{because}, \emph{which means}, \emph{so}) can be inserted at the segment's main clause boundary without changing its meaning, the segment is doing explanatory work and is \SA{}. These can also be found in neighboring segments, since the segment may be a fragment of a larger explanation.
+\end{agrulebox}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Discriminating \cPBP{} from \cSA{}.}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{@{}X l X@{}}
+\toprule
+\textbf{Segment} & \textbf{Label} & \textbf{Why} \\
+\midrule
+\seg{...but Advantage still gained for Shalke...} & \cPBP{} & Reports an observable action (right after a gank in this case). \\
+\seg{...but Advantage still gained for Shalke cuz this will force Coq back does...} & \cSA{} & Provides an explanation for the observed advantage. \\
+\seg{...just a lot of flashes used.} & \cPBP{} & Descriptive, and observable. \\
+\seg{just a lot of flashes used, this will allow Pride stalker to actually make a...} & \cSA{} & Evaluative and predictive. \\
+\seg{they're 400 gold behind the early ganks.} & \cSA{} & Draws an explanation for the gold deficit. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ---------------------------------------------------------------------
+\subsection{Play-by-Play vs.\ Recap}
+\label{sec:b-pbp-rec}
+
+\begin{agrulebox}[Test: is the broadcast still on it?]
+\rulelabel{t-pbp-rec} \PBP{} is concurrent with the action: the event is on screen, or has concluded within the same continuous stretch of attention. \REC{} is retrospective: the broadcast has moved on --- often into \SA{} --- or the segment accompanies a replay, and the caster returns to the earlier event to consolidate it.
+\end{agrulebox}
+
+\noindent Recency alone, and time respect to the latest event are a guide, but do not decide the label. A kill described two seconds after it lands, while the fight continues, is \PBP{}. The same kill recalled thirty seconds later during a lull is \REC{}. Two reliable proxies:
+
+\begin{itemize}
+  \item \textbf{Replay alignment.} Commentary over a replay is \REC{} unless it explains rather than describes, in which case \SA{}.
+  \item \textbf{Aggregation.} Counting, tallying, or listing multiple events is \REC{} if the most recent event is not the focus.
+\end{itemize}
+
+% ---------------------------------------------------------------------
+\subsection{Recap vs.\ Storytelling}
+\label{sec:b-rec-sto}
+
+\begin{agrulebox}[Test: inside or outside the match?]
+\rulelabel{t-rec-sto} If the referenced material occurred \emph{within
+the current match}, the label is \REC{}. If it comes from outside, \textit{e.g.} another game, series, split, season, or a player's career, it is
+\STO{}. The match boundary is the deciding line.
+\end{agrulebox}
+
+\noindent Segments that cross the boundary in one breath
+(\seg{that's the second time today, and the third across the series}) are
+labelled by the dominant clause under \R{dominant}; where genuinely
+balanced, \R{precedence} assigns \STO{}. Verify the examples in \S\ref{sec:def-sto}.
+
+% ---------------------------------------------------------------------
+\subsection{Storytelling vs.\ Strategic Analysis}
+\label{sec:b-sto-sa}
+
+\begin{agrulebox}[Test: what grounds the claim?]
+\rulelabel{t-sto-sa} Confusion can derive from their explanatory nature. \SA{} grounds its explanation in the \emph{game state}: positions, gold, cooldowns, comps and win conditions. \STO{} grounds it in \emph{narrative}: history, rivalry, psychology, stakes, career. Ask what evidence the caster is appealing to.
+\end{agrulebox}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Discriminating \cSTO{} from \cSA{}.}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{@{}X l X@{}}
+\toprule
+\textbf{Segment} & \textbf{Label} & \textbf{Why} \\
+\midrule
+\seg{...you know, Ziggs early doesn't have that much pressure.} & \cSA{} & Grounded in champion pick. \\
+\seg{...holds on to his flash. He's like, "Well, you got me."} & \cSTO{} & Grounded in player's mental. \\
+\seg{I think it might be I think it might be the year of Dudu.} & \cSTO{} & Narrative around a player. \\
+\seg{He was already winning the match up. Now he is just absurdly fed.} & \cSA{} & Grounded in matchup. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% ---------------------------------------------------------------------
+\subsection{Hype vs.\ Play-by-Play}
+\label{sec:b-pbp-hyp}
+
+Governed entirely by \R{hype-test}: the information test, not the volume test. If the segment tells the listener something about the game, it is not \HYP{}, however it is delivered. Because this boundary is where annotator drift concentrates, per-label agreement on \HYP{} should be reported explicitly in the reliability analysis (\S\ref{sec:iaa}).
+
+\noindent As an additional note, \HYP{} segments are often short, single-utterance segments. So a long-spanning dialogue will most probably be \PBP{}.
+
+% ---------------------------------------------------------------------
+\subsection{Hype vs.\ Banter}
+\label{sec:b-ban-hyp}
+
+\begin{agrulebox}[Test: who is being addressed?]
+\rulelabel{t-ban-hyp} \HYP{} is directed at the audience; \BAN{} is directed at the co-caster. Excited co-caster interaction about a play (\seg{Did you see that?}) is \HYP{} when it functions as shared celebration for the audience, and \BAN{} only when the interpersonal relationship is itself the point.
+\end{agrulebox}
+
+% ---------------------------------------------------------------------
+\subsection{Banter vs.\ Storytelling}
+\label{sec:b-ban-sto}
+
+\begin{agrulebox}[Test: is it about the competition?]
+\rulelabel{t-ban-sto} A caster's personal anecdote is \BAN{} when it is social filler and \STO{} when it contributes to the competitive narrative. \textit{E.g.} an anecdote about a specific player that frames his performance is \STO{}; an anecdote about the caster's breakfast is \BAN{}.
+\end{agrulebox}
+
+% =====================================================================
+\section{Degraded Input}
+\label{sec:degraded}
+
+The transcripts are automatically generated and contain recognition errors, fragments, and segmentation artefacts. The following rules make the handling of these systematic rather than improvised.
+
+\begin{itemize}
+  \item \rulelabel{d-fragment} \textbf{Fragments of an interpretable
+    move take that move's label.} If \seg{And then} is followed
+    by \seg{might not be holding on for all too much}, both are \PBP{}.
+
+  \item \rulelabel{d-backchannel} \textbf{Backchannels and minimal responses} (\textit{E.g.} \seg{Uh.}, \seg{And...}, \seg{Yeah.}) take the label of the move they support, since their discourse function is to sustain it. A bare \seg{And uh,} caused by stutter inside a narration is \PBP{}. Where they support nothing identifiable, flag \textsf{NON-CONTENT} (\S\ref{sec:flags}).
+
+  \item \rulelabel{d-garble} \textbf{Segments whose text is unrecognizable} through ASR error are labelled from the audio where the audio is clear, and flagged \textsf{ASR-ERROR} in all cases so that they can be excluded from text-only model evaluation.
+
+  \item \rulelabel{d-single} \textbf{Single-token segments are not automatically \HYP{}.} Apply \R{d-fragment} and \R{d-backchannel} first. An isolated \seg{lane} could be part of \SA{}; an isolated \seg{Insane} is \HYP{}.
+
+  \item \rulelabel{d-empty} \textbf{Empty or sound-only segments} are flagged \textsf{NON-CONTENT} and excluded.
+\end{itemize}
+
+\begin{agrulebox}[Why flags rather than extra labels]
+Extending the label set to cover transcript pathologies would mix two different kinds of category: discourse function and data quality inside one variable, and would contaminate the transition and distribution analyses. Flags keep the six-label variable clean and make exclusion decisions auditable and reversible for future work.
+\end{agrulebox}
+
+% =====================================================================
+\section{Auxiliary Flags}
+\label{sec:flags}
+
+Flags are recorded independently of the label: a flagged segment normally still carries a label, and the flag records why that label is qualified. At most one flag is recorded per segment; where more than one applies, record the one listed first in Table~\ref{tab:flags}.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Auxiliary flags, their meaning, and their effect on the corpus.}
+\label{tab:flags}
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\textwidth}{@{}l X l@{}}
+\toprule
+\textbf{Flag} & \textbf{Applies when} & \textbf{Effect} \\
+\midrule
+\textsf{UNCERTAIN} & The annotator could not decide confidently after applying the full procedure. & Retained; reported. \\
+\textsf{ASR-ERROR} & Text is materially corrupted relative to the audio. & Retained; excluded from text-only evaluation. \\
+\textsf{NON-CONTENT} & Empty, whitespace, or an unattachable minimal token. & Excluded. \\
+\textsf{MULTI-FUNCTION} & Two functions are genuinely co-dominant, but one was still chosen; \R{precedence} was invoked. & Reported. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent \textsf{UNCERTAIN} and \textsf{MULTI-FUNCTION} are the scheme's own diagnostics. Their rate per label is a direct measure of where the definitions are weakest, and should be reported alongside the
+agreement statistics rather than quietly dropped.
+
+% =====================================================================
+\section{Reliability and Adjudication}
+\label{sec:iaa}
+
+\subsection{Current status of the corpus}
+
+The corpus described in this thesis was annotated by a single annotator, the author. This is stated plainly because it bounds what can be claimed: without a second annotator, inter-annotator agreement cannot be established, only its internal consistency. The protocol below specifies how reliability is to be established, and is a prerequisite for the human-in-the-loop study rather than an optional addition to it.
+
+\subsection{Protocol}
+
+\begin{enumerate}
+  \item \textbf{Sample.} Double-annotate a stratified sample of at least 10\% of segments, drawn across games and across game phases (early, mid, late), so that the sample is not dominated by any single match or by the label distribution of one phase.
+  \item \textbf{Independence.} A second annotator works from this document alone, without sight of the first annotator's labels and without model suggestions.
+  \item \textbf{Statistic.} Report \textbf{Krippendorff's $\alpha$} (nominal) as the headline figure --- it accommodates missing data and generalises beyond two coders. Report Cohen's $\kappa$ additionally where exactly two annotators fully overlap. Report raw agreement alongside both.
+  \item \textbf{Per-label reporting.} Report agreement per label, not only overall. A high global $\alpha$ carried by \PBP{} frequency while \HYP{} and \STO{} disagree is a materially different result from uniform agreement.
+  \item \textbf{Confusion structure.} Report the annotator-by-annotator confusion matrix. Its off-diagonal mass should be compared against the boundary pairs in \S\ref{sec:boundaries}: disagreement concentrated on documented boundaries is a different finding from disagreement scattered across unrelated labels.
+  \item \textbf{Adjudication.} Disagreements are resolved in a reconciliation session. Every resolution is recorded with the rule that decided it. Where no existing rule decides, a new rule is added and the guideline version incremented (\S\ref{sec:versioning}).
+  \item \textbf{Intra-annotator check.} Re-annotate a held-out sample of at least 200 segments no less than two weeks after the original pass, blind to the original labels. This measures the stability of the single-annotator corpus and is the strongest reliability evidence available in a single-annotator design.
+\end{enumerate}
+
+\begin{agrulebox}[Interpreting $\alpha$]
+Report the obtained value and discuss it against conventional thresholds without treating those thresholds as a pass/fail line. For a scheme with six classes, two of which are heavily dominant, the relationship between $\alpha$ and practical usability is not a simple one, and it is more informative to discuss where agreement fails than whether a threshold was cleared.
+\end{agrulebox}
+
+% =====================================================================
+\section{AI-Assisted (Human-in-the-Loop) Annotation}
+\label{sec:hitl}
+
+This section governs annotation performed with model assistance, once the feature is operational in \textsc{Momouchi-v2}. It belongs to the guidelines rather than to the experimental chapter because the protocol must be fixed \emph{before} assisted annotation begins: a protocol settled afterwards cannot be distinguished from one fitted to the result, and the assisted labels would not be comparable with the unassisted corpus.
+
+\noindent The section has three parts. \S\ref{sec:hitl-rules} states the rules that govern the annotator's conduct. \S\ref{sec:hitl-vars} specifies what the tool must record. \S\ref{sec:hitl-validity} states what the design can and cannot support, and which control addresses each possible issue.
+
+% ---------------------------------------------------------------------
+\subsection{Protocol rules}
+\label{sec:hitl-rules}
+
+\begin{itemize}
+  \item \rulelabel{h-authority} \textbf{The human annotator is the final authority.} A model suggestion is a proposal. No label enters the corpus without human confirmation, and confirmation is an active act, never a default or a timeout.
+
+  \item \rulelabel{h-guideline} \textbf{The guidelines take precedence over the model.} Where a suggestion conflicts with a rule in this document, the rule wins. If the annotator judges that the model is right and the rule is wrong, that is a guideline revision under \S\ref{sec:versioning}. There is no silent exceptions to the guidelines. 
+
+  \item \rulelabel{h-pull} \textbf{Suggestions are pulled, not pushed.} The model's proposal is displayed only on explicit request, and only after the annotator has formed their own judgement. This makes the suggestion something the annotator compares against rather than something they read first, and it is the primary structural control on anchoring (\S\ref{sec:hitl-validity}). However, there is no penalization for requestion a suggestion, and no limit on how many times it can be requested.
+
+  \item \rulelabel{h-withhold} \textbf{Suggestions are unavailable on a randomised subset.} Pull-only reduces anchoring but does not eliminate it, since the annotator may come to request suggestions habitually. A pre-determined random subset in which the request is disabled provides the within-condition control needed to detect that drift.
+
+  \item \rulelabel{h-reserve} \textbf{Clean evaluation material is reserved before assisted annotation begins.} A set of games is designated unassisted-only and annotated without any model contact. This reservation is made in advance and recorded; it cannot be reconstructed afterwards.
+
+  \item \rulelabel{h-leak} \textbf{Model-assisted labels must not contaminate the model's own evaluation.} Any test set used to report classifier performance is drawn from the reserved material of \R{h-reserve} and is annotated without assistance from a model trained on overlapping data.
+
+  \item \rulelabel{h-order} \textbf{Conditions are counterbalanced.} Assisted and unassisted blocks alternate in \textsc{abba} order, so that learning and fatigue effects are distributed across conditions rather than confounded with them. Session length remains capped as in \R{proc-fatigue}.
+
+  \item \rulelabel{h-prereg} \textbf{The analysis plan is fixed in advance.} Hypotheses, dependent variables, and the intended statistical treatment are recorded before assisted annotation begins and reported as specified, including where the result is null.
+\end{itemize}
+
+% ---------------------------------------------------------------------
+\subsection{Recorded variables}
+\label{sec:hitl-vars}
+
+\rulelabel{h-record} Every annotation produced under this protocol records the fields in Table~\ref{tab:hitl-vars}. The suggested and final labels are recorded \emph{separately}: this is to construct the human-model confusion matrix, and to count the amount of times that a suggestion is accepted by the annotator. 
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Fields recorded for each annotation under the HITL protocol.}
+\label{tab:hitl-vars}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\textbf{Field} & \textbf{Content and purpose} \\
+\midrule
+\textsf{guideline\_version} & Version under which the label was produced (\R{v-record}). \\
+\textsf{condition} & Assisted or unassisted; block identifier for \R{h-order}. \\
+\textsf{suggestion\_available} & Whether a suggestion could be requested (\R{h-withhold}). \\
+\textsf{suggestion\_requested} & Whether the annotator requested one, and at what point. \\
+\textsf{suggested\_label} & The model's proposal, recorded whether or not it was adopted. \\
+\textsf{final\_label} & The label entered into the corpus. \\
+\textsf{provenance} & Unassisted, accepted, modified, or rejected --- derived from the two label fields, stored explicitly for auditability. \\
+\textsf{time\_on\_segment} & Per-segment dwell time, with an idle timeout so that breaks and video scrubbing do not inflate it. \\
+\textsf{flags} & Auxiliary flags as in \S\ref{sec:flags}. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent Session-level totals are not a substitute for per-segment timing: they are confounded by breaks, replay scrubbing, and variation in session length, and cannot support a claim about annotation efficiency.
+
+% ---------------------------------------------------------------------
+\subsection{Validity: what this design supports}
+\label{sec:hitl-validity}
+
+The annotators taking part in the study, and each one's prior relationship to
+this scheme, are reported with the results. That roster determines the scope of
+the claims the study can support, and the claims are stated in those terms
+rather than in general ones.
+
+\begin{agrulebox}[Scope constrains generalisation, not measurement]
+Every quantity the design specifies is measured and reported in full:
+per-segment annotation time, acceptance and override rates, the human--model
+confusion matrix, and inter- and intra-annotator agreement. What the annotator
+roster constrains is the population those numbers describe --- not whether they
+are collected. A narrow scope honestly stated is a stronger result than a broad
+one that the design cannot carry.
+\end{agrulebox}
+
+\paragraph{What is claimed.} The study reports the effect of a fixed assistance
+protocol on the participating annotators working under a fixed scheme, with the
+threats in Table~\ref{tab:hitl-threats} made explicit and controlled where a
+control is available. Efficiency and consistency are treated as separable
+outcomes and reported independently.
+
+\paragraph{What is not claimed.} No claim is made that the observed effects
+generalise to annotator populations not represented in the roster. Where the
+author --- who wrote this document --- is among the annotators, no claim about
+the scheme's learnability is drawn from that annotator's performance;
+learnability claims rest only on annotators who worked from this document
+without prior involvement in its design.
+
+\begin{table}[H]
+\centering
+\small
+\caption{Threats to validity, the control applied, and what remains.}
+\label{tab:hitl-threats}
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\textwidth}{@{}p{0.24\textwidth} X X@{}}
+\toprule
+\textbf{Threat} & \textbf{Control} & \textbf{Residual limitation} \\
+\midrule
+An annotator authored the scheme &
+Annotators recruited independently of the scheme's design contribute the
+learnability and agreement evidence; the author's own annotations are reported
+separately &
+Effects specific to scheme familiarity remain confounded for that annotator \\
+\addlinespace
+Assistant mirrors the annotator (a model fine-tuned on an annotator's own
+labels reproduces their idiosyncrasies, so agreement partly measures
+self-agreement) &
+The RQ2 assistant is conditioned on this document rather than trained on the
+participating annotators' labels; the fine-tuned classifier answers RQ3
+separately &
+The assistant carries its own biases, which differ from a fine-tuned model's
+and are not themselves measured \\
+\addlinespace
+Anchoring on the suggestion &
+Pull-only display (\R{h-pull}); randomised withholding (\R{h-withhold});
+request timing recorded &
+Cannot be eliminated wherever a suggestion is seen at all \\
+\addlinespace
+Learning and fatigue across sessions &
+\textsc{abba} counterbalancing (\R{h-order}); capped sessions
+(\R{proc-fatigue}) &
+With few annotators, order and condition cannot be fully separated \\
+\addlinespace
+Experimenter expectancy &
+Pre-registered analysis plan (\R{h-prereg}); null results reported as obtained &
+Annotators aware of the study's purpose cannot be fully blinded to condition \\
+\addlinespace
+Test-set contamination &
+Reserved unassisted material (\R{h-reserve}, \R{h-leak}) &
+Reserved material is unavailable for training \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{agrulebox}[On the direction of the expected effect]
+The pull-only design of \R{h-pull} adds a step to the assisted condition: the
+annotator forms a judgement, then requests a comparison. Assisted annotation may
+therefore be no faster than unassisted annotation, or slower, while still
+improving consistency. The hypotheses recorded under \R{h-prereg} treat
+efficiency and consistency as separable outcomes rather than assuming assistance
+improves both, and a null or negative efficiency result is reported as obtained.
+\end{agrulebox}
+
+
+% =====================================================================
+\section{Guideline Versioning}
+\label{sec:versioning}
+
+Annotation guidelines change as edge cases surface. Unversioned change silently mixes labels produced under different definitions, which is indistinguishable in the data from annotator inconsistency.
+
+\begin{itemize}
+  \item \rulelabel{v-record} Every annotation records the guideline version under which it was produced.
+  \item \rulelabel{v-bump} Any change to a definition, a rule, or the precedence order increments the version. Clarifications that do not change any labelling decision increment the minor version; changes that would alter existing labels increment the major version. Version 1.0 is the first normative version. 
+  \item \rulelabel{v-reannotate} A major version increment requires re-annotation of the affected segments, identified by the rule that changed. Currently this ruleset fits the preliminary corpus.
+\end{itemize}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Changelog.}
+\label{tab:changelog}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{@{}l l X@{}}
+\toprule
+\textbf{Version} & \textbf{Date} & \textbf{Change} \\
+\midrule
+1.0 & \today & Initial formalisation of the six-label scheme: two-axis framework, ordered decision procedure, precedence order, boundary rules, flag inventory, reliability and HITL protocols. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% =====================================================================
+\section{Quick Reference}
+\label{sec:quickref}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{One-page annotator reference.}
+\label{tab:quickref}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabularx}{\textwidth}{@{}l X X@{}}
+\toprule
+\textbf{Label} & \textbf{Assign when} & \textbf{Do not assign when} \\
+\midrule
+\cBAN{} & Social exchange with the co-caster is the point. & The co-caster is addressed but game information is conveyed. \\
+\cHYP{} & Removing it costs the listener no game information. & It is merely loud; it still describes or explains. \\
+\cSTO{} & Material comes from beyond this match or from a player's perspective. & The retrospection stays inside this match and is not from a player's mentality. \\
+\cSA{}  & It explains, evaluates, or predicts from the game state. & It only describes, however significant the event. \\
+\cREC{} & It consolidates concluded events of this match. & The broadcast is still on the action. \\
+\cPBP{} & It reports the unfolding action. Default. & Its main clause is causal, evaluative, or predictive. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{agrulebox}[The three rules that resolve most cases]
+\begin{enumerate}[leftmargin=2.2em]
+  \item \textbf{Function, not topic.} What is the commentary \emph{doing}?
+  \item \textbf{Orientation first.} Co-caster $\rightarrow$ \BAN{};
+    audience $\rightarrow$ \HYP{}; game state $\rightarrow$ decide by
+    temporal reference.
+  \item \textbf{The information test.} If removing the segment costs the
+    listener information, it is not \HYP{}.
+\end{enumerate}
+\end{agrulebox}

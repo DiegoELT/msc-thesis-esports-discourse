@@ -1,0 +1,74 @@
+% =====================================================================
+%  annotation-macros.tex
+%  Macros required by 92-annotation-guidelines.tex
+%  \input this at the END of the main-thesis.tex preamble.
+%
+%  jkureport already loads: xcolor, tikz, enumitem, multirow, array,
+%  tabularx, booktabs, caption, hyperref, graphicx, tcolorbox.
+%  Do NOT load those again -- only what is genuinely missing is added here.
+% =====================================================================
+
+\usepackage{float}      % for [H] float placement
+\usepackage{makecell}
+
+% tcolorbox is already loaded by jkureport WITHOUT [most]; adding the
+% option via \usepackage would raise an option clash. Load the library
+% the correct way instead:
+\tcbuselibrary{most}
+
+% jkureport loads tikz with only {backgrounds,calc}. The decision tree
+% needs these three in addition:
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
+
+% ---- Label palette ---------------------------------------------------
+\definecolor{clrPBP}{HTML}{1F5FA9}
+\definecolor{clrSA} {HTML}{1B7F6E}
+\definecolor{clrREC}{HTML}{6B4C9A}
+\definecolor{clrSTO}{HTML}{B5761F}
+\definecolor{clrHYP}{HTML}{B03A3A}
+\definecolor{clrBAN}{HTML}{5C6670}
+\definecolor{clrRule}{HTML}{333333}
+\definecolor{clrSoft}{HTML}{F4F5F7}
+
+\newcommand{\lbl}[2]{\textcolor{#1}{\textsf{\textbf{#2}}}}
+\newcommand{\PBP}{\lbl{clrPBP}{Play-by-Play}}
+\newcommand{\SA} {\lbl{clrSA}{Strategic Analysis}}
+\newcommand{\REC}{\lbl{clrREC}{Recap}}
+\newcommand{\STO}{\lbl{clrSTO}{Storytelling}}
+\newcommand{\HYP}{\lbl{clrHYP}{Hype}}
+\newcommand{\BAN}{\lbl{clrBAN}{Banter}}
+
+\newcommand{\cPBP}{\textcolor{clrPBP}{\textsf{\textbf{PBP}}}}
+\newcommand{\cSA} {\textcolor{clrSA}{\textsf{\textbf{SA}}}}
+\newcommand{\cREC}{\textcolor{clrREC}{\textsf{\textbf{REC}}}}
+\newcommand{\cSTO}{\textcolor{clrSTO}{\textsf{\textbf{STO}}}}
+\newcommand{\cHYP}{\textcolor{clrHYP}{\textsf{\textbf{HYP}}}}
+\newcommand{\cBAN}{\textcolor{clrBAN}{\textsf{\textbf{BAN}}}}
+
+% ---- Rule numbering --------------------------------------------------
+\newcounter{agrule}
+\newcommand{\rulelabel}[1]{%
+  \refstepcounter{agrule}%
+  \textbf{[R\theagrule]}\label{rule:#1}\ }
+\newcommand{\R}[1]{\textbf{R\ref{rule:#1}}}
+
+% ---- Example boxes ---------------------------------------------------
+\newtcolorbox{agexample}[1][]{%
+  enhanced, breakable, sharp corners,
+  colback=clrSoft, colframe=clrRule!35, boxrule=0.4pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fonttitle=\sffamily\bfseries\small, title={#1}}
+
+\newtcolorbox{agrulebox}[1][]{%
+  enhanced, breakable, sharp corners,
+  colback=white, colframe=clrRule, boxrule=0.8pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fonttitle=\sffamily\bfseries\small, coltitle=white,
+  colbacktitle=clrRule, title={#1}}
+
+% ---- Transcript rendering -------------------------------------------
+\newcommand{\seg}[1]{\textit{``#1''}}
+\newcommand{\caster}[1]{{\footnotesize\textsf{#1:}}\ }
+
+\setlist[itemize]{topsep=3pt, itemsep=2pt, parsep=0pt, leftmargin=1.4em}
+\setlist[enumerate]{topsep=3pt, itemsep=2pt, parsep=0pt, leftmargin=1.6em}
